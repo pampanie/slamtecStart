@@ -9,9 +9,9 @@ void ofApp::setup(){
 //	imitate(previous, cam);
 //	imitate(diff, cam);
 	
-	lastScanImg.allocate(1280, 960, OF_IMAGE_GRAYSCALE);
-	curScanImg.allocate(1280, 960, OF_IMAGE_GRAYSCALE);
-	diff.allocate(1280, 960, OF_IMAGE_GRAYSCALE);
+	lastScanImg.allocate(1280, 960,OF_IMAGE_COLOR);
+	curScanImg.allocate(1280, 960,OF_IMAGE_COLOR);
+	diff.allocate(1280, 960,OF_IMAGE_COLOR);
 //
 	tmpFbo.allocate(1280, 960);
 	
@@ -32,6 +32,8 @@ void ofApp::setup(){
 	lidar->start();
 	gui.setup("settings");
 	gui.add(scanRadius.set("scan radius",1,1,100));
+	gui.add(diffMeanThreshold.set("diff mean threshold",0.05,0.05,1));
+
 }
 
 //--------------------------------------------------------------
@@ -57,32 +59,36 @@ void ofApp::update(){
 //	}
 	
 	auto data = lidar->scan();
-	tmpFbo.clear();
-	tmpPixels.clear();
+//	tmpFbo.clear();
+//	tmpPixels.clear();
 //	curScanPixels.clear();
 //	lastScanPixels.clear();
 	
-//	tmpFbo.begin();
-//	ofSetColor(255);
-//
-//	for(auto &d : data) {
-//		if(d.quality > 0) {
-//
-//			ofVec2f pos = ofVec2f(d.distance / scanRadius.get(), 0).getRotated(d.angle);
-//			ofDrawCircle(pos, 5);
-//		}
-//	}
-//	tmpFbo.end();
-//	tmpFbo.readToPixels(tmpPixels);
-////	copy(curScanImg,lastScanImg);
-////	copy(curScanPixels,lastScanPixels);
-//
-//	copy(curScanImg,lastScanImg);
-//
-//	curScanImg.setFromPixels(tmpPixels);
-////	curScanImg.setFromPixels(tmpPixels, 1280, 960, OF_IMAGE_GRAYSCALE);
-//	absdiff(curScanImg, lastScanImg, diff);
-//	diff.update();
+	tmpFbo.begin();
+	ofClear(0,0);
+	ofSetColor(255,0,0);
+
+	for(auto &d : data) {
+		if(d.quality > 0) {
+
+			ofVec2f pos = ofVec2f(d.distance / scanRadius.get(), 0).getRotated(d.angle);
+			ofDrawCircle(pos, 5);
+		}
+	}
+	tmpFbo.end();
+	tmpFbo.draw(0,0);
+	tmpFbo.readToPixels(tmpPixels);
+
+//	copy(curScanPixels,lastScanPixels);
+
+	copy(curScanImg,lastScanImg);
+
+	curScanImg.setFromPixels(tmpPixels);
+//	curScanImg.setFromPixels(tmpPixels, 1280, 960, OF_IMAGE_COLOR);
+	absdiff(curScanImg, lastScanImg, diff);
+	diffMean = mean(toCv(diff));
+
+	diff.update();
 
 }
 
@@ -118,12 +124,18 @@ void ofApp::draw(){
 //	}
 //	ofPopMatrix();
 ////
-//	ofPushMatrix();
-//	ofTranslate(ofVec2f(ofGetWidth(), ofGetHeight())/2.f);
-//	diff.draw(0,0);
-//	ofPopMatrix();
+	
+//	cout << diffMean[0] << endl;
+	if (diffMean[0] > diffMeanThreshold.get()) {
+		ofPushMatrix();
+		ofTranslate(ofVec2f(ofGetWidth(), ofGetHeight())/2.f);
+		diff.draw(0,0);
+		ofPopMatrix();
+	}
+
 
 //	curScanImg.draw(0, 0);
+//	tmpFbo.draw(0,0);
 
 	gui.draw();
 }

@@ -24,7 +24,7 @@ public:
 	std::shared_ptr<ofxRPlidar>		lidar;
 	
 	// a scalar is like an ofVec4f but normally used for storing color information
-	cv::Scalar diffMean;
+	cv::Scalar 			diffMean;
 	ofImage				lastScanImg;
 	ofImage				curScanImg;
 	ofPixels			lastScanPixels;
@@ -36,6 +36,8 @@ public:
 	ofxPanel			gui;
 	
 	ofParameter<int>	scanRadius;
+	ofParameter<float>	diffMeanThreshold;
+	
 	void keyPressed(int key);
 	void keyReleased(int key);
 	void mouseMoved(int x, int y );
